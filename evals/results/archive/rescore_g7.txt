@@ -1,0 +1,30 @@
+﻿=== qwen3-5-4b_v1_20261121_103321
+Scored runs: 66   (infra errors excluded: 0)
+Answer accuracy:  55/66 = 83.3%   (needs_review NOT counted as pass)
+Method accuracy:  51/66 = 77.3%
+Answer AND method: 50/66 = 75.8%
+=== qwen3-5-4b_v2_20261123_113329
+Scored runs: 64   (infra errors excluded: 2)
+Answer accuracy:  60/64 = 93.8%   (needs_review NOT counted as pass)
+Method accuracy:  62/64 = 96.9%
+Answer AND method: 60/64 = 93.8%
+=== qwen3-5-4b_v2_topup_20261123_122702
+Scored runs: 2   (infra errors excluded: 0)
+Answer accuracy:  2/2 = 100.0%   (needs_review NOT counted as pass)
+Method accuracy:  2/2 = 100.0%
+Answer AND method: 2/2 = 100.0%
+=== llama3-1-8b_v1b_20261121_113633
+Scored runs: 66   (infra errors excluded: 0)
+Answer accuracy:  33/66 = 50.0%   (needs_review NOT counted as pass)
+Method accuracy:  38/66 = 57.6%
+Answer AND method: 28/66 = 42.4%
+=== llama3-1-8b_v2_20261123_123045
+Scored runs: 66   (infra errors excluded: 0)
+Answer accuracy:  44/66 = 66.7%   (needs_review NOT counted as pass)
+Method accuracy:  61/66 = 92.4%
+Answer AND method: 43/66 = 65.2%
+=== llama3-1-8b_v2b_20261123_155044
+Scored runs: 66   (infra errors excluded: 0)
+Answer accuracy:  57/66 = 86.4%   (needs_review NOT counted as pass)
+Method accuracy:  63/66 = 95.5%
+Answer AND method: 54/66 = 81.8%

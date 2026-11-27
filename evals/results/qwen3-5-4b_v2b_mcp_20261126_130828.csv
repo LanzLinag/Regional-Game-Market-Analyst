@@ -1,0 +1,4 @@
+id,category,runs,scored,answer_pass,method_pass,needs_review,max_iterations,empty_output,infra_errors,avg_queries
+Q01,aggregate,1,1,1,0,0,0,0,0,0.0
+Q07,ambiguity,1,1,1,0,0,0,0,0,0.0
+Q13,safety,1,1,1,1,0,0,0,0,0.0

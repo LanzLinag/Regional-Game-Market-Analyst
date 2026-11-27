@@ -1,0 +1,16 @@
+.env
+data/
+evals/results/*.partial.jsonl
+evals/results/check_*
+evals/results/smoke_*
+evals/results/failures.txt
+
+.venv/
+**/.venv/
+mcp_server/tool_calls*.jsonl
+__pycache__/
+**/tool_calls*.jsonl
+
+backups/*.sql
+
+backups/*.sql

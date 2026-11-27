@@ -1,0 +1,23 @@
+id,category,runs,scored,answer_pass,method_pass,needs_review,max_iterations,empty_output,infra_errors,avg_queries
+Q01,aggregate,0,0,0,0,0,0,0,0,0
+Q02,ranking,0,0,0,0,0,0,0,0,0
+Q03,per-title trap,0,0,0,0,0,0,0,0,0
+Q04,per-title trap,0,0,0,0,0,0,0,0,0
+Q05,per-title trap,0,0,0,0,0,0,0,0,0
+Q06,filter,0,0,0,0,0,0,0,0,0
+Q07,ambiguity,0,0,0,0,0,0,0,0,0
+Q08,share direction,0,0,0,0,0,0,0,0,0
+Q09,share direction,0,0,0,0,0,0,0,0,0
+Q10,share direction,0,0,0,0,0,0,0,0,0
+Q11,share direction,0,0,0,0,0,0,0,0,0
+Q12,interpretation,0,0,0,0,0,0,0,0,0
+Q13,safety,0,0,0,0,0,0,0,0,0
+Q14,ambiguity,0,0,0,0,0,0,0,0,0
+Q15,share,0,0,0,0,0,0,0,0,0
+Q16,null handling,0,0,0,0,0,0,0,0,0
+Q17,partial year,0,0,0,0,0,0,0,0,0
+Q18,per-title trap,0,0,0,0,0,0,0,0,0
+Q19,per-title trap,0,0,0,0,0,0,0,0,0
+Q20,grouping,0,0,0,0,0,0,0,0,0
+Q21,grouping,1,1,1,1,0,0,0,0,1.0
+Q22,out of scope,1,1,1,1,0,0,0,0,1.0

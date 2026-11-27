@@ -1,0 +1,44 @@
+﻿=== Q11 run 1 | answer=fail [number_missing] | method=pass []
+SQL: SELECT 100.0 * SUM(sales) FILTER (WHERE region = 'NA' AND genre = 'Shooter') / SUM(sales) FILTER (WHERE genre = 'Shooter') FROM sales_long WHERE year IS NOT NULL
+OUTPUT: Approximately **56.08%** of worldwide Shooter game sales happened in North America.
+
+**Assumptions:**
+- **Region**: Worldwide (all regions combined)
+- **Metric**: Percentage share of North American sales within total Shooter game sales across all regions
+- **Data source**: `sales_long` table, filtered by `genre = 'Shooter'`
+- **Time period**: All years with non-NULL year data (data effectively ends in 2016)
+- **Calculation method**: `(Sum of NA Shooter sales / Sum of all Shooter sales across all
+
+=== Q19 run 1 | answer=fail [entity_missing,number_missing] | method=fail [missing:(?i)group\s+by\s+(\w+\.)?name]
+SQL: SELECT name, jp_sales AS japan_sales FROM games WHERE genre = 'Puzzle' ORDER BY jp_sales DESC LIMIT 1
+OUTPUT: The best-selling Puzzle game in Japan is **Brain Age 2: More Training in Minutes a Day**, with **5.32 million** units sold in Japan.
+
+**Region:** Japan (JP)  
+**Metric:** Japan sales in millions of units  
+**Assumptions:** "Best-selling" refers to the highest Japan sales figure among Puzzle genre games. The data comes from the `games` table, which contains one row per game-platform pair with regional sales figures.
+
+=== Q17 run 2 | answer=fail [required_phrase_missing] | method=pass []
+SQL: SELECT year, SUM(global_sales) AS total_global_sales FROM games WHERE year IN (2015, 2016) GROUP BY year ORDER BY year
+OUTPUT: Total global sales decreased significantly from 2015 to 2016:
+
+- **2015**: $264.44 million
+- **2016**: $70.93 million
+
+This represents a decrease of approximately $193.51 million, or about a **73% drop** in total global sales from 2015 to 2016.
+
+**Assumptions used:**
+- Region: Global (using `global_sales` column from the `games` table)
+- Metric: Total sales summed by year
+- Data source: The `games` table which has one row per game-platform pair with global_sales already aggregated
+
+=== Q19 run 3 | answer=fail [entity_missing,number_missing] | method=fail [missing:(?i)group\s+by\s+(\w+\.)?name]
+SQL: SELECT name, jp_sales FROM games WHERE genre = 'Puzzle' ORDER BY jp_sales DESC LIMIT 1
+OUTPUT: The best-selling Puzzle game in Japan is **Brain Age 2: More Training in Minutes a Day**, with **5.32 million units** sold in Japan.
+
+**Region:** Japan  
+**Metric:** Japanese sales (jp_sales column from games table)  
+**Assumptions:** 
+- Sales are measured in millions of units
+- This ranking is based on the jp_sales column specifically for Puzzle genre games
+- The data comes from the games table which contains platform-specific sales figures
+

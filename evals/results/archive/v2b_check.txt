@@ -1,0 +1,21 @@
+﻿file=llama3-1-8b_v2b_20261123_155044.json
+label=llama3.1-8b_v2b url=http://localhost:5678/webhook/eval-agent-v2b qver=6 db_rows_after=16598
+=== Q06 run 1 [number_missing] SQL: SELECT genre, SUM(global_sales) AS total FROM games WHERE year = 2010 GROUP BY genre ORDER BY total DESC LIMIT 1
+OUTPUT: The genre with the highest global sales among games released in 2010 was Action.
+
+Region: Global, Metric: Global Sales, Assumptions: Games released in 2010.
+=== Q09 run 1 [] SQL: SELECT 100.0 * SUM(sales) FILTER (WHERE region = 'JP') / SUM(sales) FROM sales_long WHERE genre = 'Role-Playing'
+OUTPUT: The percentage of worldwide Role-Playing game sales that happened in Japan is approximately 37.99%. 
+
+Region: Japan
+Metric: Percentage of worldwide Role-Playing game sales
+Assumptions: The data is from the sales_long tab
+=== Q11 run 1 [] SQL: SELECT 100.0 * SUM(sales) FILTER (WHERE region = 'NA') / SUM(sales) FROM sales_long WHERE genre = 'Shooter'
+OUTPUT: The percentage of worldwide Shooter game sales that happened in North America is approximately 56.19%. 
+
+Region: North America
+Metric: Percentage of worldwide Shooter game sales
+Assumptions: None
+workflow path=eval-agent published=False model=llama3.1:8b HasV2=False HasV2b=False
+workflow path=eval-agent-v2 published=True model=llama3.1:8b HasV2=True HasV2b=False
+workflow path=eval-agent-v2b published=True model=qwen3.5:4b HasV2=True HasV2b=True

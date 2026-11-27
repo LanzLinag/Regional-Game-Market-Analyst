@@ -1,0 +1,241 @@
+{
+  "name": "Weekly digest",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "106bbcb6-5705-4e5b-bbe7-186cb2c6e23a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH agg AS (\n  SELECT 'genre' AS metric, region, genre AS item, SUM(sales) AS sales\n  FROM sales_long GROUP BY region, genre\n  UNION ALL\n  SELECT 'publisher', region, publisher, SUM(sales)\n  FROM sales_long WHERE publisher IS NOT NULL GROUP BY region, publisher\n  UNION ALL\n  SELECT 'platform_2015', region, platform, SUM(sales)\n  FROM sales_long WHERE year = 2015 GROUP BY region, platform\n), ranked AS (\n  SELECT metric, region, item, sales,\n    100 * sales / SUM(sales) OVER (PARTITION BY metric, region) AS share_pct,\n    ROW_NUMBER() OVER (PARTITION BY metric, region ORDER BY sales DESC, item) AS rnk\n  FROM agg\n)\nSELECT metric, region, rnk, item,\n       ROUND(sales, 2) AS sales_m, ROUND(share_pct, 1) AS share_pct\nFROM ranked\nWHERE rnk <= 3\nORDER BY metric,\n         CASE region WHEN 'NA' THEN 1 WHEN 'EU' THEN 2 WHEN 'JP' THEN 3 ELSE 4 END,\n         rnk;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "63cc61bb-37d0-4463-b08e-5692b749bd32",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "dZhdglpmKcyu2oCz",
+          "name": "vgsales-agent"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        672,
+        0
+      ],
+      "id": "cce2b4a0-b6b7-42f1-b868-15b7720114fe",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:8b",
+        "options": {
+          "temperature": 0.1,
+          "numCtx": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        672,
+        208
+      ],
+      "id": "cdb4b4d2-e432-4bac-b303-252198894028",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "j0q9y4dSGWdKkwzj",
+          "name": "ollama-local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\n\n// Guard: wrong row count means the query or data changed. Throwing triggers the Error alert workflow.\nif (rows.length !== 36) throw new Error(`Digest expected 36 rows, got ${rows.length}`);\n\nconst TITLE = {\n  genre: 'Top genres (share of the region\\'s sales, all years)',\n  publisher: 'Top publishers (share of the region\\'s sales, all years)',\n  platform_2015: 'Top platforms in 2015 (share of the region\\'s 2015 sales)',\n};\nconst REGION = {\n  NA: 'North America',\n  EU: 'Europe',\n  JP: 'Japan',\n  Other: 'Other (a grouping of many markets, not one country)',\n};\n\nlet table = '';\nfor (const metric of Object.keys(TITLE)) {\n  table += `${TITLE[metric]}\\n`;\n  for (const region of Object.keys(REGION)) {\n    const part = rows\n      .filter(r => r.metric === metric && r.region === region)\n      .sort((a, b) => Number(a.rnk) - Number(b.rnk))\n      .map(r => `${r.rnk}. ${r.item} ${Number(r.sales_m).toFixed(2)}M (${r.share_pct}%)`);\n    table += `  ${REGION[region]}: ${part.join('; ')}\\n`;\n  }\n  table += '\\n';\n}\n\nconst prompt =\n`You write a short weekly summary of video game sales by region.\nUse ONLY the facts below. Do not add numbers, years or claims that are not listed.\nWrite exactly 5 sentences: one each for North America, Europe, Japan and Other (top genre and top publisher with their percentages), then one about the 2015 platforms.\nUse platform names exactly as listed (PS4, not PlayStation 4). Do not forecast or predict.\n\nFACTS:\n${table}`;\n\nreturn [{ json: { table, prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "8de248b7-f9b5-4296-9f61-7eeef69c13b9",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "fromEmail": "lanzlinag@gmail.com",
+        "toEmail": "lanzlinag@gmail.com",
+        "subject": "Weekly vgsales regional digest",
+        "emailFormat": "text",
+        "text": "={{ $json.email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "cf019ffb-cdc5-48a3-8a33-99b81ceb1385",
+      "name": "Send an Email",
+      "webhookId": "33e0433b-1b2d-4a69-ae79-0b428431edfd",
+      "credentials": {
+        "smtp": {
+          "id": "0M9Dl6NGos6NTIp6",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const table = $('Code').first().json.table;   // <- exact name of the node that builds the table\nlet summary = String($input.first().json.text ?? '')\n  .replace(/<think>[\\s\\S]*?<\\/think>/g, '')\n  .trim();\n\n// HARD checks: throw so the Error alert workflow emails you instead of sending a bad digest\nif (summary.length < 100) throw new Error(`Digest summary empty or too short (${summary.length} chars)`);\n\nconst nums = s => (s.match(/\\d+(?:\\.\\d+)?/g) || []).map(Number);\nconst allowed = new Set(nums(table));\nconst invented = [...new Set(nums(summary).filter(n => !allowed.has(n)))];\nif (invented.length) throw new Error(`Digest contains numbers not in the SQL table: ${invented.join(', ')}`);\n\n// SOFT checks: still send, but flag them in the email\nconst warnings = [];\nfor (const r of ['North America', 'Europe', 'Japan', 'Other']) {\n  if (!summary.includes(r)) warnings.push(`Summary does not mention ${r}`);\n}\nif (/\\b(will|forecast|predict|expect|likely|future)\\b/i.test(summary)) warnings.push('Summary may contain a forecast');\nif (/\\bOther\\b[^.]*\\bcountry\\b/i.test(summary)) warnings.push('\"Other\" may be described as a country');\n\nconst email =\n`WEEKLY VGSALES REGIONAL DIGEST\n(Historical data through 2016, not live. Sales in millions of units.)\n\nSUMMARY (written by llama3.1:8b)\n${summary}\n\nCHECKS: ${warnings.length ? 'WARNINGS: ' + warnings.join('; ') : 'all passed'}\n\nSOURCE NUMBERS (from SQL)\n${table}`;\n\nreturn [{ json: { email, warnings } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        0
+      ],
+      "id": "f42af153-1eca-4f3b-93d8-91f16ff7ca04",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 7,
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        192
+      ],
+      "id": "4591b05c-d4fc-489d-947a-5f48ae8fc393",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c2d8a5fb-73f2-4f8b-86b1-f0eb586c2944",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
+  },
+  "nodeGroups": [],
+  "id": "ySw8ZLbCa4X2P1qi",
+  "tags": []
+}

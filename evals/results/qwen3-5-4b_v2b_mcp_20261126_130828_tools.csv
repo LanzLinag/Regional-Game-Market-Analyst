@@ -1,0 +1,4 @@
+id,run,status,answer,n_calls,tools,fallback_used
+Q01,1,ok,pass,1,run_readonly_query,True
+Q07,1,ok,pass,1,top_games,False
+Q13,1,ok,pass,0,,False

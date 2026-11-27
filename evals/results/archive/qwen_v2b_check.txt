@@ -1,0 +1,50 @@
+﻿file=qwen3-5-4b_v2b_20261124_140445.json
+url=http://localhost:5678/webhook/eval-agent-v2b qver=7 model=qwen3.5:4b ctx=4096 db=16598
+=== Q06 run 1 answer=pass [] method=fail [missing:(?i)global_sales]
+SQL: SELECT genre, SUM(sales) AS total_sales FROM sales_long WHERE year = 2010 GROUP BY genre ORDER BY total_sales DESC LIMIT 1
+OUTPUT: The **Action** genre had the highest global sales among games released in 2010, with total sales of **117.50 million units**.
+
+**Assumptions used:**
+- **Region**: Global (all regions combined)
+- **Metric**: Total sales in millions of units
+- **Year filter**: Games released in 2010 only
+- **Data sour
+=== Q17 run 1 answer=fail [required_phrase_missing] method=pass []
+SQL: SELECT year, SUM(global_sales) AS total_global_sales FROM games WHERE year IN (2015, 2016) GROUP BY year ORDER BY year
+OUTPUT: Total global sales in 2016 were significantly lower than in 2015:
+
+| Year | Total Global Sales (millions) |
+|------|-------------------------------|
+| 2015 | 264.44                        |
+| 2016 | 70.93                         |
+
+**Comparison:**
+- **Absolute difference**: 2016 sales were **$193.51
+=== Q06 run 2 answer=pass [] method=fail [missing:(?i)global_sales]
+SQL: SELECT genre, SUM(sales) as total_sales FROM sales_long WHERE year = 2010 GROUP BY genre ORDER BY total_sales DESC LIMIT 1
+OUTPUT: Based on the query results, **Action** had the highest global sales among games released in 2010, with total sales of **117.50 million units**.
+
+**Assumptions used:**
+- Region: Global (all regions combined)
+- Metric: Total sales in millions of units
+- Year filter: Games released in 2010 only
+- Data 
+=== Q17 run 2 answer=fail [required_phrase_missing] method=pass []
+SQL: SELECT year, SUM(global_sales) AS total FROM games WHERE year IN (2015, 2016) GROUP BY year ORDER BY year
+OUTPUT: Total global sales in 2016 were significantly lower than in 2015:
+
+- **2015**: $264.44 million
+- **2016**: $70.93 million
+
+**Comparison:**
+- 2016 sales were approximately **26.8%** of 2015's sales
+- 2015 had **$193.51 million more** in global sales than 2016
+
+This represents a dramatic decline in gl
+=== Q22 run 2 answer=fail [required_phrase_missing] method=pass []
+SQL: 
+OUTPUT: I cannot answer this question because the database only contains **historical sales data** (ending in 2016), and there is no way to predict which game will be best-selling "next year." 
+
+The available data includes:
+- Historical sales records from games released up to 2016
+- Regional sales (NA, EU, 

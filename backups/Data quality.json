@@ -1,0 +1,205 @@
+{
+  "name": "Data quality",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "316fcd0a-9886-4e3b-86d8-251fa21d1f5b",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  (SELECT COUNT(*) FROM games)::int                                                        AS row_count,\n  (SELECT COUNT(*) FROM games WHERE year IS NULL)::int                                     AS null_year,\n  (SELECT COUNT(*) FROM games WHERE publisher IS NULL)::int                                AS null_publisher,\n  (SELECT COUNT(*) FROM games WHERE name IS NULL OR platform IS NULL OR genre IS NULL)::int AS null_required,\n  (SELECT COUNT(*) FROM games\n     WHERE ABS(na_sales + eu_sales + jp_sales + other_sales - global_sales) > 0.05)::int   AS sales_mismatch,\n  (SELECT COUNT(*) FROM games\n     WHERE na_sales < 0 OR eu_sales < 0 OR jp_sales < 0 OR other_sales < 0 OR global_sales < 0)::int AS negative_sales,\n  (SELECT COUNT(*) - COUNT(DISTINCT (name, platform)) FROM games)::int                     AS dup_name_platform,\n  (SELECT COUNT(DISTINCT genre) FROM games)::int                                           AS genres,\n  (SELECT COUNT(DISTINCT platform) FROM games)::int                                        AS platforms,\n  (SELECT MIN(year) FROM games)::int                                                       AS min_year,\n  (SELECT MAX(year) FROM games)::int                                                       AS max_year,\n  (SELECT ROUND(SUM(global_sales), 2) FROM games)::float8                                  AS global_total,\n  (SELECT COUNT(*) FROM sales_long)::int                                                   AS long_rows;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "54831cdb-ba39-4615-ac32-7c5506af54a9",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "dZhdglpmKcyu2oCz",
+          "name": "vgsales-agent"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first()?.json ?? {};   // empty result => every check fails, loudly\n\nconst CHECKS = [\n  { name: 'row_count',         expected: 16598 },\n  { name: 'null_year',         expected: 271 },\n  { name: 'null_publisher',    expected: 58 },\n  { name: 'null_required',     expected: 0 },\n  { name: 'sales_mismatch',    expected: 0 },\n  { name: 'negative_sales',    expected: 0 },\n  { name: 'dup_name_platform', expected: 5 },\n  { name: 'genres',            expected: 12 },\n  { name: 'platforms',         expected: 31 },\n  { name: 'min_year',          expected: 1980 },\n  { name: 'max_year',          expected: 2020 },\n  { name: 'global_total',      expected: 8920.44, tol: 0.005 },\n  { name: 'long_rows',         expected: 66392 },\n];\n\nconst failures = [];\nfor (const c of CHECKS) {\n  const raw = row[c.name];\n  const actual = Number(raw);\n  const tol = c.tol ?? 0;\n  if (raw === undefined || raw === null || Number.isNaN(actual) || Math.abs(actual - c.expected) > tol) {\n    failures.push(`${c.name}: expected ${c.expected}, got ${raw}`);\n  }\n}\n\nreturn [{\n  json: {\n    ok: failures.length === 0,\n    failures,\n    message: `Data quality FAILED (${failures.length} checks)\\n` + failures.join('\\n'),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "1f299738-0ff2-4168-900a-f745b649078d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "64dd4b0d-3732-4813-a1d5-071aae3850cb",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "8f0f1554-3d05-49f1-b2cd-ddac3d10c3ba",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "fromEmail": "lanzlinag@gmail.com",
+        "toEmail": "lanzlinag@gmail.com",
+        "subject": "=[ALERT] vgsales data quality: {{ $json.failures.length }} check(s) failed",
+        "emailFormat": "text",
+        "text": "={{ $json.message }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "8619c5b9-90e4-4340-b242-898d84b5d9fa",
+      "name": "Send an Email",
+      "webhookId": "89e23b45-0f03-4a28-b6dd-0249220a59bf",
+      "credentials": {
+        "smtp": {
+          "id": "0M9Dl6NGos6NTIp6",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        192
+      ],
+      "id": "2b79afed-2c1a-4912-8878-060722697695",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "rZKUVB6fSkv7aGDA",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "e35120be-5281-408a-a332-7ced5ae12ea5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
+  },
+  "nodeGroups": [],
+  "id": "2YUBaGwW9rUdrTxP",
+  "tags": []
+}

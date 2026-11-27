@@ -1,0 +1,21 @@
+﻿Grader: questions.json version 8  (22 questions)
+
+POOLED PER CONFIGURATION (replicates pooled; infra errors excluded)
+configuration              runs  answer (all)       method (all)       both (all)         answer dev         answer held-out
+qwen3.5:4b   prompt v1       66  55/66 = 83.3%      51/66 = 77.3%      50/66 = 75.8%      32/39 = 82.1%      23/27 = 85.2%
+qwen3.5:4b   prompt v2       66  62/66 = 93.9%      64/66 = 97.0%      62/66 = 93.9%      38/39 = 97.4%      24/27 = 88.9%
+qwen3.5:4b   prompt v2b     132  126/132 = 95.5%    131/132 = 99.2%    126/132 = 95.5%    78/78 = 100.0%     48/54 = 88.9%
+llama3.1:8b  prompt v1       66  33/66 = 50.0%      38/66 = 57.6%      28/66 = 42.4%      20/39 = 51.3%      13/27 = 48.1%
+llama3.1:8b  prompt v2       66  44/66 = 66.7%      61/66 = 92.4%      43/66 = 65.2%      26/39 = 66.7%      18/27 = 66.7%
+llama3.1:8b  prompt v2b     132  113/132 = 85.6%    125/132 = 94.7%    107/132 = 81.1%    77/78 = 98.7%      36/54 = 66.7%
+
+REPLICATES (same configuration, separate runs: shows run-to-run variance)
+qwen3.5:4b   prompt v2
+   qwen3-5-4b_v2_20261123_113329              answer 60/64 = 93.8%      method 62/64 = 96.9%
+   qwen3-5-4b_v2_topup_20261123_122702        answer 2/2 = 100.0%       method 2/2 = 100.0%
+qwen3.5:4b   prompt v2b
+   qwen3-5-4b_v2b_20261123_162531             answer 63/66 = 95.5%      method 65/66 = 98.5%
+   qwen3-5-4b_v2b_20261124_140445             answer 63/66 = 95.5%      method 66/66 = 100.0%
+llama3.1:8b  prompt v2b
+   llama3-1-8b_v2b_20261123_130436            answer 56/66 = 84.8%      method 62/66 = 93.9%
+   llama3-1-8b_v2b_20261123_155044            answer 57/66 = 86.4%      method 63/66 = 95.5%
