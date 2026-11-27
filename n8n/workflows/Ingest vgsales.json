@@ -1,0 +1,371 @@
+{
+  "name": "Ingest vgsales",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        32
+      ],
+      "id": "99c4213d-9c45-4fd1-b932-750c5f213c05",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/files/vgsales.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        32
+      ],
+      "id": "a30f624a-6052-4e0b-afb9-6221ee21344b",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "options": {
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        32
+      ],
+      "id": "5ca006dd-9f2f-4b67-968c-4a3286d92c91",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\n\nconst toNull = v => (v === undefined || v === null || String(v).trim() === '' || String(v).trim() === 'N/A') ? null : String(v).trim();\n\nconst cleaned = rows.map(r => ({\n  rank: parseInt(r.Rank, 10),\n  name: toNull(r.Name),\n  platform: toNull(r.Platform),\n  year: toNull(r.Year) === null ? null : parseInt(r.Year, 10),\n  genre: toNull(r.Genre),\n  publisher: toNull(r.Publisher),\n  na_sales: parseFloat(r.NA_Sales),\n  eu_sales: parseFloat(r.EU_Sales),\n  jp_sales: parseFloat(r.JP_Sales),\n  other_sales: parseFloat(r.Other_Sales),\n  global_sales: parseFloat(r.Global_Sales),\n}));\n\n// Fail loudly on bad rows instead of loading them\nconst bad = cleaned.filter(r =>\n  !r.name || !r.platform || !r.genre ||\n  [r.na_sales, r.eu_sales, r.jp_sales, r.other_sales, r.global_sales].some(Number.isNaN)\n);\nif (bad.length > 0) {\n  throw new Error(`${bad.length} bad rows, first: ${JSON.stringify(bad[0])}`);\n}\n\nreturn cleaned.map(r => ({ json: r }));\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        32
+      ],
+      "id": "726f902a-e288-4768-a504-fa499c4110c8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "games",
+          "mode": "list",
+          "cachedResultName": "games"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "rank",
+              "displayName": "rank",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "year",
+              "displayName": "year",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "genre",
+              "displayName": "genre",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "publisher",
+              "displayName": "publisher",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "na_sales",
+              "displayName": "na_sales",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "eu_sales",
+              "displayName": "eu_sales",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "jp_sales",
+              "displayName": "jp_sales",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "other_sales",
+              "displayName": "other_sales",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "global_sales",
+              "displayName": "global_sales",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "queryBatching": "transaction"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1136,
+        32
+      ],
+      "id": "bed37992-003e-4808-bb59-f51051e78aff",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "QQpv6ieW1VtqDpma",
+          "name": "vgsales-admin"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "TRUNCATE games RESTART IDENTITY;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        32
+      ],
+      "id": "74a094fc-7a12-49cf-8422-e6c252368db5",
+      "name": "Execute a SQL query",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "QQpv6ieW1VtqDpma",
+          "name": "vgsales-admin"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "   SELECT COUNT(*)::int AS row_count FROM games;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1360,
+        32
+      ],
+      "id": "2754b116-1049-415b-823f-3b4351f5c10a",
+      "name": "Execute a SQL query1",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "QQpv6ieW1VtqDpma",
+          "name": "vgsales-admin"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "   const EXPECTED = 16598;\n   const actual = $input.first().json.row_count;\n   if (actual !== EXPECTED) {\n     throw new Error(`Row count check failed: expected ${EXPECTED}, got ${actual}`);\n   }\n   return [{ json: { ok: true, row_count: actual } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        32
+      ],
+      "id": "b3822bf7-b67e-421e-b833-381f780a812a",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "48893f20-702c-4338-b7e1-95c929222766",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
+  },
+  "nodeGroups": [],
+  "id": "jR5737gLRck4DJnj",
+  "tags": []
+}

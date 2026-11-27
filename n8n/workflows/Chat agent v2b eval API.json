@@ -1,0 +1,181 @@
+{
+  "name": "Chat agent v2b eval API",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.question }}",
+        "options": {
+          "systemMessage": "You are a video game sales analyst. Answer using the query_vgsales tool.\nNever answer numbers from memory. Never invent game names or numbers: use only what the query returned.\nIf a query returns no rows, say so.\n\nData (PostgreSQL):\n- games(id, rank, name, platform, year, genre, publisher, na_sales, eu_sales,\n  jp_sales, other_sales, global_sales). One row per game-platform pair. No region column.\n- sales_long(id, name, platform, year, genre, publisher, region, sales).\n  One row per game-platform-region. region is one of 'NA','EU','JP','Other'.\n  The column is called sales (there is no na_sales here). Prefer this for regional questions.\n- genre is one of: Action, Adventure, Fighting, Misc, Platform, Puzzle, Racing,\n  Role-Playing, Shooter, Simulation, Sports, Strategy.\n- Both tables already have name, platform, year, genre and publisher. Never JOIN them.\n\nRules:\n- Sales are in millions of units.\n- name is NOT unique: a game appears once per platform. To rank games, sum per title and never rank single rows:\n  SELECT name, SUM(sales) AS total FROM sales_long WHERE region = 'NA' GROUP BY name ORDER BY total DESC LIMIT 1\n  With no region, use global_sales: SELECT name, SUM(global_sales) AS total FROM games GROUP BY name ORDER BY total DESC LIMIT 1\n  To rank genres, platforms or publishers, GROUP BY that column instead. GROUP BY name only ranks games.\n- For a percentage or share, run ONE query that returns ONE row, with no GROUP BY name.\n  Always write the division: 100.0 * numerator / denominator. The denominator decides the meaning.\n  \"X% of a region's sales are one genre\" (denominator = all sales in that region):\n  SELECT 100.0 * SUM(sales) FILTER (WHERE genre = 'Sports') / SUM(sales) FROM sales_long WHERE region = 'NA'\n  \"X% of a genre's worldwide sales happened in one region\" (denominator = all sales in that genre):\n  SELECT 100.0 * SUM(sales) FILTER (WHERE region = 'EU') / SUM(sales) FROM sales_long WHERE genre = 'Racing'\n- \"How many games\" is ambiguous: state whether you counted rows or distinct titles.\n- year and publisher can be NULL. Data effectively ends in 2016, and 2016 is partial.\n- 'Other' is a group of many markets, not one country.\n- \"Best-selling\" or \"top\" with no region means global_sales. State that assumption.\n- Write one SELECT at a time, with LIMIT 20 or less. In PostgreSQL every non-aggregated\n  column in SELECT must appear in GROUP BY.\n- If a query returns an error, fix the SQL and call the tool again. Never write a tool call as text in your answer.\n- You can only read data. If asked to modify it, refuse and do not call the tool.\n- After answering, state the region, metric, and assumptions you used.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "96c45e47-b62a-483c-9b61-480d4a00785d",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Runs ONE read-only PostgreSQL SELECT and returns the rows. Tables: games, sales_long. Always include LIMIT",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('sql_query', 'One PostgreSQL SELECT statement', 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.7,
+      "position": [
+        480,
+        240
+      ],
+      "id": "dcd68834-a888-465f-be0a-6fe05bfa4b08",
+      "name": "query_vgsales",
+      "credentials": {
+        "postgres": {
+          "id": "dZhdglpmKcyu2oCz",
+          "name": "vgsales-agent"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "eval-agent-v2b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "49a5a4ce-7e19-4c0c-a495-97989ae3701b",
+      "name": "Webhook",
+      "webhookId": "f848ab1d-8c9d-4d14-89db-4b0eba52b663"
+    },
+    {
+      "parameters": {
+        "model": "qwen3.5:4b",
+        "options": {
+          "temperature": 0.1,
+          "numCtx": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "a451e9d8-d97c-4ae9-8a6e-879e21e0c5b2",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "j0q9y4dSGWdKkwzj",
+          "name": "ollama-local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        -128
+      ],
+      "id": "ad6be28f-b15b-432c-851f-940c445a6c74",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        48
+      ],
+      "id": "feced2cc-f362-41a6-8ac3-e6a9a913791c",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "query_vgsales": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "78de6674-6fb5-45a2-980e-54f662e8ba93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
+  },
+  "nodeGroups": [],
+  "id": "kQIHXjzoKTbbZzv0",
+  "tags": []
+}

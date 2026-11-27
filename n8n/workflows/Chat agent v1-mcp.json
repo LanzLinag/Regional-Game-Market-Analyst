@@ -1,0 +1,122 @@
+{
+  "name": "Chat agent v1-mcp",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "60788900-df67-4087-ab7f-dfa437ceae91",
+      "name": "When chat message received",
+      "webhookId": "98af2256-44b8-493c-9dde-f1ee00229141"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a video game sales analyst. Answer questions using the query_vgsales tool.\nNever answer numbers from memory.\n\nData (PostgreSQL):\n- games(id, rank, name, platform, year, genre, publisher, na_sales, eu_sales,\n  jp_sales, other_sales, global_sales). One row per game-platform pair.\n- sales_long(id, name, platform, year, genre, publisher, region, sales).\n  region is one of 'NA','EU','JP','Other'. Prefer this for regional questions.\n\nRules:\n- Sales are in millions of units.\n- name is NOT unique: a game appears once per platform. For a game's total\n  sales, GROUP BY name. \"How many games\" is ambiguous: rows vs distinct titles.\n- year and publisher can be NULL. Data effectively ends in 2016, and 2016 is partial.\n- 'Other' is a group of many markets, not one country.\n- \"Best-selling\" or \"top\" with no region means global_sales. State that assumption.\n- Write one SELECT only, with LIMIT 20 or less. Never modify data.\n- After answering, state the region, metric, and assumptions you used.",
+          "maxIterations": 5,
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1e312791-cd7c-47ad-8d5a-e704736d638e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen3.5:4b",
+        "options": {
+          "temperature": 0.1,
+          "numCtx": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "4befe469-66d6-43e9-a387-1d2b2389b1ae",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "j0q9y4dSGWdKkwzj",
+          "name": "ollama-local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "http://host.docker.internal:8000/mcp",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        192
+      ],
+      "id": "30074726-097e-4b04-8beb-ff93bb574a33",
+      "name": "MCP Client"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e51c1f97-199e-466c-bf9b-dbc4c3f77be2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
+  },
+  "nodeGroups": [],
+  "id": "VcX2khn1yOpYVWCD",
+  "tags": []
+}

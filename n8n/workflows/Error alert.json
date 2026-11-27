@@ -1,0 +1,70 @@
+{
+  "name": "Error alert",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "37c12f37-a792-4587-a34d-a6fd2694ff65",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "fromEmail": "lanzlinag@gmail.com",
+        "toEmail": "lanzlinag@gmail.com",
+        "subject": "=[ALERT] n8n workflow error: {{ $json.workflow.name }}",
+        "emailFormat": "text",
+        "text": "=Error: {{ $json.execution.error.message }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3dd52188-e59b-4587-b438-862a1cd138d5",
+      "name": "Send an Email",
+      "webhookId": "a95c81a0-5841-449a-8f11-d7c2f70c033c",
+      "credentials": {
+        "smtp": {
+          "id": "0M9Dl6NGos6NTIp6",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d5186d45-57fb-48ce-b9ad-fd3bb60ff7e8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
+  },
+  "nodeGroups": [],
+  "id": "rZKUVB6fSkv7aGDA",
+  "tags": []
+}

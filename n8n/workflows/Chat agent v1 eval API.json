@@ -1,22 +1,10 @@
 {
-  "name": "Chat agent v1",
+  "name": "Chat agent v1 eval API",
   "nodes": [
     {
       "parameters": {
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
-      "typeVersion": 1.5,
-      "position": [
-        0,
-        0
-      ],
-      "id": "3134ac42-e720-4fba-bf9c-60eb30a7010f",
-      "name": "When chat message received",
-      "webhookId": "54237778-e2d0-4f98-a134-d58e91ae9591"
-    },
-    {
-      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.question }}",
         "options": {
           "systemMessage": "You are a video game sales analyst. Answer questions using the query_vgsales tool.\nNever answer numbers from memory.\n\nData (PostgreSQL):\n- games(id, rank, name, platform, year, genre, publisher, na_sales, eu_sales,\n  jp_sales, other_sales, global_sales). One row per game-platform pair.\n- sales_long(id, name, platform, year, genre, publisher, region, sales).\n  region is one of 'NA','EU','JP','Other'. Prefer this for regional questions.\n\nRules:\n- Sales are in millions of units.\n- name is NOT unique: a game appears once per platform. For a game's total\n  sales, GROUP BY name. \"How many games\" is ambiguous: rows vs distinct titles.\n- year and publisher can be NULL. Data effectively ends in 2016, and 2016 is partial.\n- 'Other' is a group of many markets, not one country.\n- \"Best-selling\" or \"top\" with no region means global_sales. State that assumption.\n- Write one SELECT only, with LIMIT 20 or less. Never modify data.\n- After answering, state the region, metric, and assumptions you used.",
           "maxIterations": 5,
@@ -29,31 +17,9 @@
         224,
         0
       ],
-      "id": "b9b30450-8db5-4b57-afaf-f7d167507051",
-      "name": "AI Agent"
-    },
-    {
-      "parameters": {
-        "model": "qwen3.5:4b",
-        "options": {
-          "temperature": 0.1,
-          "numCtx": 4096
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
-      "typeVersion": 1,
-      "position": [
-        224,
-        192
-      ],
-      "id": "caf9cddc-e876-4775-8231-3d8b13527a63",
-      "name": "Ollama Chat Model",
-      "credentials": {
-        "ollamaApi": {
-          "id": "j0q9y4dSGWdKkwzj",
-          "name": "ollama-local"
-        }
-      }
+      "id": "50b11ed0-947e-47ec-9298-dc652cb70833",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -66,10 +32,10 @@
       "type": "n8n-nodes-base.postgresTool",
       "typeVersion": 2.7,
       "position": [
-        528,
-        176
+        480,
+        240
       ],
-      "id": "bd135ca3-0201-4816-9256-d79829088ec9",
+      "id": "52123406-864b-444f-acb6-30d45a80adb6",
       "name": "query_vgsales",
       "credentials": {
         "postgres": {
@@ -77,11 +43,88 @@
           "name": "vgsales-agent"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "eval-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "ca32202b-6b87-40c5-9321-04ecd9a2cd05",
+      "name": "Webhook",
+      "webhookId": "57194b6f-ccab-40c8-9cbe-3a951bdb8868"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:8b",
+        "options": {
+          "temperature": 0.1,
+          "numCtx": 4096
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "78af279e-9f43-409f-b2ac-954f95568f05",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "j0q9y4dSGWdKkwzj",
+          "name": "ollama-local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        -128
+      ],
+      "id": "b56cea98-6f44-4bcc-b3f0-b50bbd2b4230",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        48
+      ],
+      "id": "cef21907-8310-4dc5-85f6-6a359a41409a",
+      "name": "Respond to Webhook1"
     }
   ],
   "pinData": {},
   "connections": {
-    "When chat message received": {
+    "query_vgsales": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
       "main": [
         [
           {
@@ -103,29 +146,36 @@
         ]
       ]
     },
-    "query_vgsales": {
-      "ai_tool": [
+    "AI Agent": {
+      "main": [
         [
           {
-            "node": "AI Agent",
-            "type": "ai_tool",
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
             "index": 0
           }
         ]
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "a9da8c95-6927-4c6e-b8f2-0e9e3c6c3517",
+  "versionId": "362b54e0-a51f-4311-b644-a844f4d8e8de",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "1782914aa76627dcd550fe38eb171e4e2248ff39cd5f1aa526d017693a1e8e36"
   },
   "nodeGroups": [],
-  "id": "0jZjGUsbSOGF9tHg",
+  "id": "yTfDeq32fsG2EZ1c",
   "tags": []
 }
